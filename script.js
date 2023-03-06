@@ -13,14 +13,15 @@ const countdown = document.querySelector(".countdown");
 // Game Page
 const itemContainer = document.querySelector(".item-container");
 // Score Page
-const finalTimeEl = document.querySelector(".final-time");
-const baseTimeEl = document.querySelector(".base-time");
-const penaltyTimeEl = document.querySelector(".penalty-time");
+const finalTimeElem = document.querySelector(".final-time");
+const baseTimeElem = document.querySelector(".base-time");
+const penaltyTimeElem = document.querySelector(".penalty-time");
 const playAgainBtn = document.querySelector(".play-again");
 
 // Equations
 let numberOfQuestions;
 let equationsArray = [];
+let playerGuess = [];
 
 // Game Page
 let firstNumber = 0;
@@ -29,8 +30,91 @@ let equationObject = {};
 const wrongFormat = [];
 
 // Time
+let timer;
+let timePlayed = 0;
+let baseTime = 0;
+let penaltyTime = 0;
+let finalTime = 0;
+let finalTimeDisplay = "0.0s";
 
 // Scroll
+let valueY = 0;
+
+// ===========================//
+// stop timer, process results, go to score page
+function checkTime() {
+  if (playerGuess.length == numberOfQuestions) {
+    clearInterval(timer);
+
+    // check for wrong guesses, add penalty time
+    equationsArray.forEach((equation, i) => {
+      if (equation.evaluated == playerGuess[i]) {
+        // correct
+      } else {
+        // wrong guess,  add penalty
+        penaltyTime += 0.5;
+      }
+    });
+    finalTime = timePlayed + penaltyTime;
+    console.log("time played\n", timePlayed, "\npenalty\n", penaltyTime),
+      "\nfinal\n",
+      finalTime;
+    displayScores();
+  }
+}
+
+// reset game
+function playAgain() {
+  gamePage.addEventListener("click", startTimer);
+  scorePage.hidden = true;
+  splashPage.hidden = false;
+  equationsArray = [];
+  playerGuess = [];
+  valueY = 0;
+}
+
+// =======
+function showScorePage() {
+  gamePage.hidden = true;
+  scorePage.hidden = false;
+}
+
+// format & display time in DOM
+function displayScores() {
+  finalTimeDisplay = finalTime.toFixed(1);
+  baseTime = timePlayed.toFixed(1);
+  penaltyTime = penaltyTime.toFixed(1);
+  baseTimeElem.textContent = `Base Time: ${baseTime}s`;
+  penaltyTimeElem.textContent = `Penalty: +${penaltyTime}s`;
+  finalTimeElem.textContent = `${finalTimeDisplay}s`;
+  showScorePage();
+}
+
+// =============================== //
+function addTime() {
+  timePlayed += 0.1;
+  checkTime();
+}
+
+// start timer when game page is clicked
+function startTimer() {
+  // reset times
+  timePlayed = 0;
+  penaltyTime = 0;
+  finalTime = 0;
+  timer = setInterval(addTime, 100);
+  gamePage.removeEventListener("click", startTimer);
+}
+
+// scroll, store user selection in array
+function select(guessTrue) {
+  // scroll on Y axis by 80px
+  valueY += 80;
+  itemContainer.scroll(0, valueY);
+
+  // add player guess
+  return guessTrue ? playerGuess.push("true") : playerGuess.push("false");
+}
 
 // Get random integar
 function getRandomInt(max) {
@@ -41,11 +125,10 @@ function getRandomInt(max) {
 function createEquations() {
   // Randomly choose how many correct equations there should be
   const correctEquations = getRandomInt(numberOfQuestions);
-  console.log(correctEquations);
 
   // Set amount of wrong equations
   const wrongEquations = numberOfQuestions - correctEquations;
-  console.log(wrongEquations);
+
   // Loop through, multiply random numbers up to 9, push to array
   for (let i = 0; i < correctEquations; i++) {
     firstNumber = getRandomInt(9);
@@ -152,7 +235,6 @@ function getValueFromRadio() {
 function selectNumberOfQuestions(e) {
   e.preventDefault();
   numberOfQuestions = getValueFromRadio();
-  console.log("no of ques: ", numberOfQuestions);
   if (numberOfQuestions) {
     showCountdown();
   }
@@ -173,3 +255,4 @@ startForm.addEventListener("click", () => {
 
 // ================================== //
 startForm.addEventListener("submit", selectNumberOfQuestions);
+gamePage.addEventListener("click", startTimer);
